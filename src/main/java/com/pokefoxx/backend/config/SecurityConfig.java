@@ -11,8 +11,9 @@ import org.springframework.http.HttpMethod;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -32,7 +33,7 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Configuración principal de seguridad
+    // Configuracion principal de seguridad
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -41,52 +42,57 @@ public class SecurityConfig {
             throws Exception {
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())
 
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            .authenticationProvider(authenticationProvider)
+                .authenticationProvider(authenticationProvider)
 
-            .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
 
-                // Permitir solicitudes OPTIONS de React
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Permitir solicitudes OPTIONS de React
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Rutas de autenticación
-                .requestMatchers("/api/auth/**").permitAll()
+                        // Rutas de autenticacion
+                        .requestMatchers("/api/auth/**").permitAll()
 
-                // Consultar productos públicamente
-                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                        // Consultar productos publicamente
+                        .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
 
-                // Crear y actualizar productos
-                .requestMatchers(HttpMethod.POST, "/api/productos/**")
-                    .hasAnyRole("ADMINISTRADOR", "VENDEDOR")
+                        // Crear y actualizar productos
+                        .requestMatchers(HttpMethod.POST, "/api/productos/**")
+                        .hasAnyRole("ADMINISTRADOR", "VENDEDOR")
 
-                .requestMatchers(HttpMethod.PUT, "/api/productos/**")
-                    .hasAnyRole("ADMINISTRADOR", "VENDEDOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/productos/**")
+                        .hasAnyRole("ADMINISTRADOR", "VENDEDOR")
 
-                // Eliminar productos: solamente administrador
-                .requestMatchers(HttpMethod.DELETE, "/api/productos/**")
-                    .hasRole("ADMINISTRADOR")
+                        // Eliminar productos: solamente administrador
+                        .requestMatchers(HttpMethod.DELETE, "/api/productos/**")
+                        .hasRole("ADMINISTRADOR")
 
-                // Cualquier otra ruta requiere autenticación
-                .anyRequest().authenticated()
-            )
+                        // Gestion de perfiles y usuarios
+                        .requestMatchers("/api/usuarios/me").authenticated()
 
-            // Incorporar nuestro filtro JWT
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-            );
+                        .requestMatchers("/api/usuarios/**")
+                        .hasRole("ADMINISTRADOR")
+
+                        // Cualquier otra ruta requiere autenticacion
+                        .anyRequest().authenticated()
+                )
+
+                // Incorporar nuestro filtro JWT
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
 
-    // Configurar autenticación con usuarios de MySQL
+    // Configurar autenticacion con usuarios de MySQL
     @Bean
     public AuthenticationProvider authenticationProvider(
             CustomUserDetailsService userDetailsService,
@@ -100,15 +106,15 @@ public class SecurityConfig {
         return provider;
     }
 
-    // Administrador de autenticación
+    // Administrador de autenticacion mediante ProviderManager
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration) throws Exception {
+            AuthenticationProvider authenticationProvider) {
 
-        return configuration.getAuthenticationManager();
+        return new ProviderManager(authenticationProvider);
     }
 
-    // Permitir conexión con React
+    // Permitir conexion con React
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 

@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -42,14 +43,49 @@ public class UsuarioService {
     // Registrar usuario
     public Usuario registrarUsuario(Usuario usuario) {
 
-        if (usuarioRepository.existsByEmail(usuario.getEmail())) {
-            throw new IllegalArgumentException("El correo ya está registrado");
+        if (usuario == null ||
+                usuario.getRun() == null ||
+                usuario.getFirstName() == null ||
+                usuario.getLastName() == null ||
+                usuario.getEmail() == null ||
+                usuario.getPassword() == null ||
+                usuario.getRun().isBlank() ||
+                usuario.getFirstName().isBlank() ||
+                usuario.getLastName().isBlank() ||
+                usuario.getEmail().isBlank() ||
+                usuario.getPassword().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Debes completar todos los campos obligatorios"
+            );
         }
 
-        if (usuarioRepository.existsByRun(usuario.getRun())) {
-            throw new IllegalArgumentException("El RUN ya está registrado");
+        String email = usuario.getEmail()
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        String run = usuario.getRun().trim();
+
+        if (usuarioRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException(
+                    "El correo ya está registrado"
+            );
         }
 
+        if (usuarioRepository.existsByRun(run)) {
+            throw new IllegalArgumentException(
+                    "El RUN ya está registrado"
+            );
+        }
+
+        usuario.setId(null);
+        usuario.setEmail(email);
+        usuario.setRun(run);
+
+        usuario.setFirstName(usuario.getFirstName().trim());
+        usuario.setLastName(usuario.getLastName().trim());
+
+        // Encriptar contraseña
         usuario.setPassword(
                 passwordEncoder.encode(usuario.getPassword())
         );
@@ -67,26 +103,73 @@ public class UsuarioService {
                 .orElseThrow(() ->
                         new RuntimeException("Usuario no encontrado"));
 
-        if (datos.getEmail() != null &&
-                !datos.getEmail().equals(usuario.getEmail()) &&
-                usuarioRepository.existsByEmail(datos.getEmail())) {
-            throw new IllegalArgumentException("El correo ya está registrado");
+        if (datos.getEmail() != null) {
+
+            String email = datos.getEmail()
+                    .trim()
+                    .toLowerCase(Locale.ROOT);
+
+            if (email.isBlank()) {
+                throw new IllegalArgumentException(
+                        "El correo no puede estar vacío"
+                );
+            }
+
+            if (!email.equals(usuario.getEmail()) &&
+                    usuarioRepository.existsByEmail(email)) {
+
+                throw new IllegalArgumentException(
+                        "El correo ya está registrado"
+                );
+            }
+
+            usuario.setEmail(email);
         }
 
-        if (datos.getRun() != null &&
-                !datos.getRun().equals(usuario.getRun()) &&
-                usuarioRepository.existsByRun(datos.getRun())) {
-            throw new IllegalArgumentException("El RUN ya está registrado");
+        if (datos.getRun() != null) {
+
+            String run = datos.getRun().trim();
+
+            if (run.isBlank()) {
+                throw new IllegalArgumentException(
+                        "El RUN no puede estar vacío"
+                );
+            }
+
+            if (!run.equals(usuario.getRun()) &&
+                    usuarioRepository.existsByRun(run)) {
+
+                throw new IllegalArgumentException(
+                        "El RUN ya está registrado"
+                );
+            }
+
+            usuario.setRun(run);
         }
 
-        if (datos.getRun() != null) usuario.setRun(datos.getRun());
-        if (datos.getFirstName() != null) usuario.setFirstName(datos.getFirstName());
-        if (datos.getLastName() != null) usuario.setLastName(datos.getLastName());
-        if (datos.getEmail() != null) usuario.setEmail(datos.getEmail());
-        if (datos.getBirthDate() != null) usuario.setBirthDate(datos.getBirthDate());
-        if (datos.getRegion() != null) usuario.setRegion(datos.getRegion());
-        if (datos.getCommune() != null) usuario.setCommune(datos.getCommune());
-        if (datos.getAddress() != null) usuario.setAddress(datos.getAddress());
+        if (datos.getFirstName() != null) {
+            usuario.setFirstName(datos.getFirstName());
+        }
+
+        if (datos.getLastName() != null) {
+            usuario.setLastName(datos.getLastName());
+        }
+
+        if (datos.getBirthDate() != null) {
+            usuario.setBirthDate(datos.getBirthDate());
+        }
+
+        if (datos.getRegion() != null) {
+            usuario.setRegion(datos.getRegion());
+        }
+
+        if (datos.getCommune() != null) {
+            usuario.setCommune(datos.getCommune());
+        }
+
+        if (datos.getAddress() != null) {
+            usuario.setAddress(datos.getAddress());
+        }
 
         return usuarioRepository.save(usuario);
     }

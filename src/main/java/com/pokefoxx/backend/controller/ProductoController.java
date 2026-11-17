@@ -36,12 +36,16 @@ public class ProductoController {
 
     // Crear producto
     @PostMapping
-    public ResponseEntity<Producto> crearProducto(@RequestBody Producto producto) {
+    public ResponseEntity<Producto> crearProducto(
+            @RequestBody Producto producto) {
+
         producto.setId(null);
 
-        Producto nuevoProducto = productoService.guardarProducto(producto);
+        Producto nuevoProducto =
+                productoService.guardarProducto(producto);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoProducto);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(nuevoProducto);
     }
 
     // Actualizar producto
@@ -53,6 +57,7 @@ public class ProductoController {
         return productoService.buscarProductoPorId(id)
                 .map(productoExistente -> {
                     producto.setId(id);
+
                     return ResponseEntity.ok(
                             productoService.guardarProducto(producto)
                     );
@@ -62,7 +67,8 @@ public class ProductoController {
 
     // Eliminar producto
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarProducto(
+            @PathVariable Long id) {
 
         if (productoService.buscarProductoPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();

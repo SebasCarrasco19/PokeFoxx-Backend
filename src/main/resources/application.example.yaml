@@ -1,11 +1,12 @@
+
 spring:
   application:
     name: PokeFoxx-Backend
 
   datasource:
     url: jdbc:mysql://localhost:3306/pokefoxx_db
-    username: root
-    password: "TU_CONTRASENA_MYSQL"
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -15,3 +16,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+app:
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+    run: ${ADMIN_RUN:11111111-1}
