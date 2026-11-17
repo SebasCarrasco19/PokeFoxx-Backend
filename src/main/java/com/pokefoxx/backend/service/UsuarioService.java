@@ -1,4 +1,3 @@
-
 package com.pokefoxx.backend.service;
 
 import com.pokefoxx.backend.model.Usuario;
@@ -174,11 +173,53 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+    // Cambiar rol de usuario
+    public Usuario cambiarRol(Long id, String nuevoRol) {
+
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Usuario no encontrado"));
+
+        if (nuevoRol == null || nuevoRol.isBlank()) {
+            throw new IllegalArgumentException(
+                    "El rol es obligatorio"
+            );
+        }
+
+        String rolNormalizado;
+
+        switch (nuevoRol.trim().toLowerCase(Locale.ROOT)) {
+
+            case "cliente":
+                rolNormalizado = "Cliente";
+                break;
+
+            case "vendedor":
+                rolNormalizado = "Vendedor";
+                break;
+
+            case "administrador":
+                rolNormalizado = "Administrador";
+                break;
+
+            default:
+                throw new IllegalArgumentException(
+                        "Rol no válido"
+                );
+        }
+
+        usuario.setRole(rolNormalizado);
+
+        return usuarioRepository.save(usuario);
+    }
+
     // Eliminar usuario
     public void eliminarUsuario(Long id) {
 
         if (!usuarioRepository.existsById(id)) {
-            throw new RuntimeException("Usuario no encontrado");
+            throw new RuntimeException(
+                    "Usuario no encontrado"
+            );
         }
 
         usuarioRepository.deleteById(id);

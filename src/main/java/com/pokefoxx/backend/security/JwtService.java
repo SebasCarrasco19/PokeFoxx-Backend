@@ -1,4 +1,3 @@
-
 package com.pokefoxx.backend.security;
 
 import io.jsonwebtoken.Claims;
@@ -22,14 +21,38 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    // Generar token JWT
+    @Value("${jwt.refresh-expiration:604800000}")
+    private long refreshExpiration;
+
+    // Generar token normal
     public String generarToken(UserDetails userDetails) {
 
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("tipo", "access")
                 .issuedAt(new Date())
                 .expiration(
-                        new Date(System.currentTimeMillis() + jwtExpiration)
+                        new Date(
+                                System.currentTimeMillis()
+                                        + jwtExpiration
+                        )
+                )
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    // Generar refresh token
+    public String generarRefreshToken(UserDetails userDetails) {
+
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .claim("tipo", "refresh")
+                .issuedAt(new Date())
+                .expiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + refreshExpiration
+                        )
                 )
                 .signWith(getSigningKey())
                 .compact();
@@ -37,19 +60,43 @@ public class JwtService {
 
     // Extraer correo del token
     public String extraerEmail(String token) {
-        return extraerClaims(token).getSubject();
+
+        return extraerClaims(token)
+                .getSubject();
     }
 
-    // Validar token
-    public boolean validarToken(String token, UserDetails userDetails) {
+    // Validar token normal
+    public boolean validarToken(
+            String token,
+            UserDetails userDetails) {
 
-        final String email = extraerEmail(token);
+        final String email =
+                extraerEmail(token);
 
-        return email.equals(userDetails.getUsername())
+        return email.equals(
+                userDetails.getUsername()
+        ) && !tokenExpirado(token);
+    }
+
+    // Validar refresh token
+    public boolean validarRefreshToken(
+            String token,
+            UserDetails userDetails) {
+
+        final String email =
+                extraerEmail(token);
+
+        String tipo = extraerClaims(token)
+                .get("tipo", String.class);
+
+        return email.equals(
+                userDetails.getUsername()
+        )
+                && "refresh".equals(tipo)
                 && !tokenExpirado(token);
     }
 
-    // Comprobar si el token expiró
+    // Comprobar si el token expiro
     private boolean tokenExpirado(String token) {
 
         return extraerClaims(token)
@@ -57,7 +104,7 @@ public class JwtService {
                 .before(new Date());
     }
 
-    // Extraer información del token
+    // Extraer informacion del token
     private Claims extraerClaims(String token) {
 
         return Jwts.parser()
@@ -70,8 +117,13 @@ public class JwtService {
     // Obtener clave para firmar y verificar
     private SecretKey getSigningKey() {
 
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        byte[] keyBytes =
+                Decoders.BASE64.decode(
+                        jwtSecret
+                );
 
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(
+                keyBytes
+        );
     }
 }

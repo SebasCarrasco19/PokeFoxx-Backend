@@ -1,4 +1,3 @@
-
 package com.pokefoxx.backend.controller;
 
 import com.pokefoxx.backend.model.Usuario;
@@ -36,7 +35,9 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(convertirRespuesta(usuario));
+        return ResponseEntity.ok(
+                convertirRespuesta(usuario)
+        );
     }
 
     // Actualizar perfil del usuario autenticado
@@ -54,15 +55,24 @@ public class UsuarioController {
         }
 
         try {
-            Usuario actualizado = usuarioService.actualizarUsuario(
-                    usuario.getId(), datos
+
+            Usuario actualizado =
+                    usuarioService.actualizarUsuario(
+                            usuario.getId(),
+                            datos
+                    );
+
+            return ResponseEntity.ok(
+                    convertirRespuesta(actualizado)
             );
 
-            return ResponseEntity.ok(convertirRespuesta(actualizado));
-
         } catch (IllegalArgumentException e) {
+
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(
+                            "error",
+                            e.getMessage()
+                    ));
         }
     }
 
@@ -78,12 +88,68 @@ public class UsuarioController {
 
     // ADMINISTRADOR: buscar usuario por ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarUsuario(@PathVariable Long id) {
+    public ResponseEntity<?> buscarUsuario(
+            @PathVariable Long id) {
 
         return usuarioService.buscarUsuarioPorId(id)
-                .map(usuario -> ResponseEntity.ok(
-                        convertirRespuesta(usuario)))
-                .orElse(ResponseEntity.notFound().build());
+                .map(usuario ->
+                        ResponseEntity.ok(
+                                convertirRespuesta(usuario)
+                        ))
+                .orElse(
+                        ResponseEntity.notFound().build()
+                );
+    }
+
+    // ADMINISTRADOR: cambiar rol de un usuario
+    @PutMapping("/{id}/rol")
+    public ResponseEntity<?> cambiarRol(
+            @PathVariable Long id,
+            @RequestBody CambiarRolRequest request,
+            Authentication authentication) {
+
+        Usuario administrador = usuarioService
+                .buscarPorEmail(authentication.getName())
+                .orElse(null);
+
+        if (administrador == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Evitar que el administrador cambie su propio rol
+        if (administrador.getId().equals(id)) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "error",
+                            "No puedes cambiar tu propio rol"
+                    ));
+        }
+
+        try {
+
+            Usuario actualizado =
+                    usuarioService.cambiarRol(
+                            id,
+                            request.role()
+                    );
+
+            return ResponseEntity.ok(
+                    convertirRespuesta(actualizado)
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "error",
+                            e.getMessage()
+                    ));
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // ADMINISTRADOR: actualizar usuario
@@ -97,14 +163,24 @@ public class UsuarioController {
         }
 
         try {
-            Usuario actualizado =
-                    usuarioService.actualizarUsuario(id, datos);
 
-            return ResponseEntity.ok(convertirRespuesta(actualizado));
+            Usuario actualizado =
+                    usuarioService.actualizarUsuario(
+                            id,
+                            datos
+                    );
+
+            return ResponseEntity.ok(
+                    convertirRespuesta(actualizado)
+            );
 
         } catch (IllegalArgumentException e) {
+
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(
+                            "error",
+                            e.getMessage()
+                    ));
         }
     }
 
@@ -123,7 +199,8 @@ public class UsuarioController {
     }
 
     // Convertir usuario a respuesta sin contraseña
-    private PerfilUsuarioResponse convertirRespuesta(Usuario usuario) {
+    private PerfilUsuarioResponse convertirRespuesta(
+            Usuario usuario) {
 
         return new PerfilUsuarioResponse(
                 usuario.getId(),
@@ -139,7 +216,13 @@ public class UsuarioController {
         );
     }
 
-    // DTO de respuesta
+    // DTO para cambiar rol
+    public record CambiarRolRequest(
+            String role
+    ) {
+    }
+
+    // DTO de respuesta sin contraseña
     public record PerfilUsuarioResponse(
             Long id,
             String run,
@@ -151,5 +234,6 @@ public class UsuarioController {
             String region,
             String commune,
             String address
-    ) {}
+    ) {
+    }
 }
