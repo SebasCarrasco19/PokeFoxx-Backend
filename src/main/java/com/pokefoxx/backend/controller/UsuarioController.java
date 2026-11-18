@@ -54,6 +54,19 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
 
+        // No permitir cambiar el correo desde el perfil
+        if (datos.getEmail() != null
+                && !datos.getEmail()
+                        .trim()
+                        .equalsIgnoreCase(usuario.getEmail())) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "error",
+                            "No puedes cambiar tu correo desde el perfil"
+                    ));
+        }
+
         try {
 
             Usuario actualizado =
@@ -186,8 +199,27 @@ public class UsuarioController {
 
     // ADMINISTRADOR: eliminar usuario
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarUsuario(
-            @PathVariable Long id) {
+    public ResponseEntity<?> eliminarUsuario(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Usuario administrador = usuarioService
+                .buscarPorEmail(authentication.getName())
+                .orElse(null);
+
+        if (administrador == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Evitar que el administrador se elimine a si mismo
+        if (administrador.getId().equals(id)) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "error",
+                            "No puedes eliminar tu propio usuario"
+                    ));
+        }
 
         if (usuarioService.buscarUsuarioPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();
