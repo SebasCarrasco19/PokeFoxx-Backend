@@ -1,9 +1,10 @@
-
 package com.pokefoxx.backend.controller;
 
 import com.pokefoxx.backend.model.Usuario;
 import com.pokefoxx.backend.security.JwtService;
 import com.pokefoxx.backend.service.UsuarioService;
+
+import io.jsonwebtoken.JwtException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,10 +14,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -26,18 +29,21 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UsuarioService usuarioService;
+    private final UserDetailsService userDetailsService;
 
     public AuthController(
             AuthenticationManager authenticationManager,
             JwtService jwtService,
-            UsuarioService usuarioService) {
+            UsuarioService usuarioService,
+            UserDetailsService userDetailsService) {
 
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.usuarioService = usuarioService;
+        this.userDetailsService = userDetailsService;
     }
 
-    // Iniciar sesión
+    // Iniciar sesion
     @PostMapping("/login")
     public ResponseEntity<?> login(
             @RequestBody Map<String, String> loginRequest) {
@@ -49,9 +55,13 @@ public class AuthController {
                 || password == null || password.isBlank()) {
 
             return ResponseEntity.badRequest()
-                    .body(Map.of("error",
-                            "Debes ingresar correo y contraseña"));
+                    .body(Map.of(
+                            "error",
+                            "Debes ingresar correo y contraseña"
+                    ));
         }
+
+        email = email.trim().toLowerCase(Locale.ROOT);
 
         try {
 
@@ -66,17 +76,83 @@ public class AuthController {
             UserDetails userDetails =
                     (UserDetails) authentication.getPrincipal();
 
-            String token = jwtService.generarToken(userDetails);
+            String token =
+                    jwtService.generarToken(userDetails);
+
+            String refreshToken =
+                    jwtService.generarRefreshToken(userDetails);
 
             return ResponseEntity.ok(
-                    Map.of("token", token)
+                    Map.of(
+                            "token", token,
+                            "refreshToken", refreshToken
+                    )
             );
 
         } catch (AuthenticationException e) {
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error",
-                            "Correo o contraseña incorrectos"));
+                    .body(Map.of(
+                            "error",
+                            "Correo o contraseña incorrectos"
+                    ));
+        }
+    }
+
+    // Renovar token JWT
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(
+            @RequestBody RefreshRequest request) {
+
+        if (request == null
+                || request.refreshToken() == null
+                || request.refreshToken().isBlank()) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "error",
+                            "Debes enviar el refresh token"
+                    ));
+        }
+
+        try {
+
+            String email =
+                    jwtService.extraerEmail(
+                            request.refreshToken()
+                    );
+
+            UserDetails userDetails =
+                    userDetailsService.loadUserByUsername(email);
+
+            if (!jwtService.validarRefreshToken(
+                    request.refreshToken(),
+                    userDetails)) {
+
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of(
+                                "error",
+                                "Refresh token no valido"
+                        ));
+            }
+
+            String nuevoToken =
+                    jwtService.generarToken(userDetails);
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "token",
+                            nuevoToken
+                    )
+            );
+
+        } catch (JwtException | IllegalArgumentException e) {
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                            "error",
+                            "Refresh token invalido o expirado"
+                    ));
         }
     }
 
@@ -93,8 +169,10 @@ public class AuthController {
                 request.password() == null) {
 
             return ResponseEntity.badRequest()
-                    .body(Map.of("error",
-                            "Debes completar los campos obligatorios"));
+                    .body(Map.of(
+                            "error",
+                            "Debes completar los campos obligatorios"
+                    ));
         }
 
         try {
@@ -129,8 +207,17 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
 
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(
+                            "error",
+                            e.getMessage()
+                    ));
         }
+    }
+
+    // Datos que recibe el refresh
+    public record RefreshRequest(
+            String refreshToken
+    ) {
     }
 
     // Datos que recibe el registro
@@ -144,5 +231,6 @@ public class AuthController {
             String commune,
             String address,
             String password
-    ) {}
+    ) {
+    }
 }

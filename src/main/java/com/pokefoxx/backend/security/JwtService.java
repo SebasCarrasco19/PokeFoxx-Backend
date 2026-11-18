@@ -15,115 +15,108 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+        @Value("${jwt.secret}")
+        private String jwtSecret;
 
-    @Value("${jwt.expiration}")
-    private long jwtExpiration;
+        @Value("${jwt.expiration}")
+        private long jwtExpiration;
 
-    @Value("${jwt.refresh-expiration:604800000}")
-    private long refreshExpiration;
+        @Value("${jwt.refresh-expiration:604800000}")
+        private long refreshExpiration;
 
-    // Generar token normal
-    public String generarToken(UserDetails userDetails) {
+        // Generar token normal
+        public String generarToken(UserDetails userDetails) {
 
-        return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .claim("tipo", "access")
-                .issuedAt(new Date())
-                .expiration(
-                        new Date(
-                                System.currentTimeMillis()
-                                        + jwtExpiration
-                        )
-                )
-                .signWith(getSigningKey())
-                .compact();
-    }
+                return Jwts.builder()
+                                .subject(userDetails.getUsername())
+                                .claim("tipo", "access")
+                                .issuedAt(new Date())
+                                .expiration(
+                                                new Date(
+                                                                System.currentTimeMillis()
+                                                                                + jwtExpiration))
+                                .signWith(getSigningKey())
+                                .compact();
+        }
 
-    // Generar refresh token
-    public String generarRefreshToken(UserDetails userDetails) {
+        // Generar refresh token
+        public String generarRefreshToken(UserDetails userDetails) {
 
-        return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .claim("tipo", "refresh")
-                .issuedAt(new Date())
-                .expiration(
-                        new Date(
-                                System.currentTimeMillis()
-                                        + refreshExpiration
-                        )
-                )
-                .signWith(getSigningKey())
-                .compact();
-    }
+                return Jwts.builder()
+                                .subject(userDetails.getUsername())
+                                .claim("tipo", "refresh")
+                                .issuedAt(new Date())
+                                .expiration(
+                                                new Date(
+                                                                System.currentTimeMillis()
+                                                                                + refreshExpiration))
+                                .signWith(getSigningKey())
+                                .compact();
+        }
 
-    // Extraer correo del token
-    public String extraerEmail(String token) {
+        // Extraer correo del token
+        public String extraerEmail(String token) {
 
-        return extraerClaims(token)
-                .getSubject();
-    }
+                return extraerClaims(token)
+                                .getSubject();
+        }
 
-    // Validar token normal
-    public boolean validarToken(
-            String token,
-            UserDetails userDetails) {
+        // Validar token normal
+        public boolean validarToken(
+                        String token,
+                        UserDetails userDetails) {
 
-        final String email =
-                extraerEmail(token);
+                final String email = extraerEmail(token);
 
-        return email.equals(
-                userDetails.getUsername()
-        ) && !tokenExpirado(token);
-    }
+                String tipo = extraerClaims(token)
+                                .get("tipo", String.class);
 
-    // Validar refresh token
-    public boolean validarRefreshToken(
-            String token,
-            UserDetails userDetails) {
+                return email.equals(userDetails.getUsername())
+                                && "access".equals(tipo)
+                                && !tokenExpirado(token);
+        }
 
-        final String email =
-                extraerEmail(token);
+        // Validar refresh token
+        public boolean validarRefreshToken(
+                        String token,
+                        UserDetails userDetails) {
 
-        String tipo = extraerClaims(token)
-                .get("tipo", String.class);
+                final String email = extraerEmail(token);
 
-        return email.equals(
-                userDetails.getUsername()
-        )
-                && "refresh".equals(tipo)
-                && !tokenExpirado(token);
-    }
+                String tipo = extraerClaims(token)
+                                .get("tipo", String.class);
 
-    // Comprobar si el token expiro
-    private boolean tokenExpirado(String token) {
+                return email.equals(
+                                userDetails.getUsername())
+                                && "refresh".equals(tipo)
+                                && !tokenExpirado(token);
+        }
 
-        return extraerClaims(token)
-                .getExpiration()
-                .before(new Date());
-    }
+        // Comprobar si el token expiro
+        private boolean tokenExpirado(String token) {
 
-    // Extraer informacion del token
-    private Claims extraerClaims(String token) {
+                return extraerClaims(token)
+                                .getExpiration()
+                                .before(new Date());
+        }
 
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
+        // Extraer informacion del token
+        private Claims extraerClaims(String token) {
 
-    // Obtener clave para firmar y verificar
-    private SecretKey getSigningKey() {
+                return Jwts.parser()
+                                .verifyWith(getSigningKey())
+                                .build()
+                                .parseSignedClaims(token)
+                                .getPayload();
+        }
 
-        byte[] keyBytes =
-                Decoders.BASE64.decode(
-                        jwtSecret
-                );
+        // Obtener clave para firmar y verificar
+        private SecretKey getSigningKey() {
 
-        return Keys.hmacShaKeyFor(
-                keyBytes
-        );
-    }
+                byte[] keyBytes = Decoders.BASE64.decode(
+                                jwtSecret);
+
+                return Keys.hmacShaKeyFor(
+                                keyBytes);
+        }
 }
