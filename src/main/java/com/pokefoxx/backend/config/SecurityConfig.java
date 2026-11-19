@@ -1,3 +1,4 @@
+
 package com.pokefoxx.backend.config;
 
 import com.pokefoxx.backend.security.CustomUserDetailsService;
@@ -73,7 +74,26 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/productos/**")
                         .hasRole("ADMINISTRADOR")
 
-                        // Gestion de perfiles y usuarios
+                        // Consultar categorias publicamente
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/categorias",
+                                "/api/categorias/**"
+                        ).permitAll()
+
+                        // Crear categorias: solamente administrador
+                        .requestMatchers(HttpMethod.POST, "/api/categorias/**")
+                        .hasRole("ADMINISTRADOR")
+
+                        // Actualizar categorias: solamente administrador
+                        .requestMatchers(HttpMethod.PUT, "/api/categorias/**")
+                        .hasRole("ADMINISTRADOR")
+
+                        // Eliminar categorias: solamente administrador
+                        .requestMatchers(HttpMethod.DELETE, "/api/categorias/**")
+                        .hasRole("ADMINISTRADOR")
+
+                        // Consultar perfil del usuario autenticado
                         .requestMatchers("/api/usuarios/me").authenticated()
 
                         // Gestion general de usuarios: solamente administrador
