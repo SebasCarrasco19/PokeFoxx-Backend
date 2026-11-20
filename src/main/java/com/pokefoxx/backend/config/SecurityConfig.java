@@ -1,4 +1,3 @@
-
 package com.pokefoxx.backend.config;
 
 import com.pokefoxx.backend.security.CustomUserDetailsService;
@@ -59,8 +58,15 @@ public class SecurityConfig {
                         // Rutas de autenticacion
                         .requestMatchers("/api/auth/**").permitAll()
 
+                        // Stock critico: solamente administrador
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/productos/stock-critico"
+                        ).hasRole("ADMINISTRADOR")
+
                         // Consultar productos publicamente
-                        .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/productos/**")
+                        .permitAll()
 
                         // Crear productos: solamente administrador
                         .requestMatchers(HttpMethod.POST, "/api/productos/**")

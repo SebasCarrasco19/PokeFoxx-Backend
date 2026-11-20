@@ -1,4 +1,3 @@
-
 package com.pokefoxx.backend.controller;
 
 import com.pokefoxx.backend.model.Categoria;
@@ -87,15 +86,23 @@ public class CategoriaController {
 
     // Eliminar categoria
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarCategoria(
+    public ResponseEntity<?> eliminarCategoria(
             @PathVariable Long id) {
 
         if (categoriaService.buscarCategoriaPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        categoriaService.eliminarCategoria(id);
+        try {
 
-        return ResponseEntity.noContent().build();
+            categoriaService.eliminarCategoria(id);
+
+            return ResponseEntity.noContent().build();
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 }

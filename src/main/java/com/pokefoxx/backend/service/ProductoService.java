@@ -1,4 +1,3 @@
-
 package com.pokefoxx.backend.service;
 
 import com.pokefoxx.backend.model.Producto;
@@ -30,6 +29,22 @@ public class ProductoService {
     // Listar todos los productos
     public List<Producto> listarProductos() {
         return productoRepository.findAll();
+    }
+
+    // Listar productos con oferta activa
+    public List<Producto> listarOfertas() {
+        return productoRepository.findAll().stream()
+                .filter(Producto::isOnSale)
+                .toList();
+    }
+
+    // El stock es critico si llego al limite configurado
+    public List<Producto> listarStockCritico() {
+        return productoRepository.findAll().stream()
+                .filter(producto -> producto.getStock() != null
+                        && producto.getCriticalStock() != null
+                        && producto.getStock() <= producto.getCriticalStock())
+                .toList();
     }
 
     // Buscar producto por ID
@@ -128,6 +143,22 @@ public class ProductoService {
                         .compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException(
                     "El precio original no puede ser negativo");
+        }
+
+        // Una oferta debe tener un precio menor al original
+        if (producto.isOnSale()
+                && producto.getPrice()
+                        .compareTo(producto.getOriginalPrice()) >= 0) {
+            throw new IllegalArgumentException(
+                    "El precio en oferta debe ser menor al precio original");
+        }
+
+        // Sin oferta, ambos precios deben coincidir
+        if (!producto.isOnSale()
+                && producto.getPrice()
+                        .compareTo(producto.getOriginalPrice()) != 0) {
+            throw new IllegalArgumentException(
+                    "Sin oferta, el precio debe ser igual al precio original");
         }
 
         if (producto.getStock() != null

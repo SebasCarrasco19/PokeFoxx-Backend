@@ -1,8 +1,8 @@
-
 package com.pokefoxx.backend.service;
 
 import com.pokefoxx.backend.model.Categoria;
 import com.pokefoxx.backend.repository.CategoriaRepository;
+import com.pokefoxx.backend.repository.ProductoRepository;
 
 import org.springframework.stereotype.Service;
 
@@ -13,9 +13,14 @@ import java.util.Optional;
 public class CategoriaService {
 
     private final CategoriaRepository categoriaRepository;
+    private final ProductoRepository productoRepository;
 
-    public CategoriaService(CategoriaRepository categoriaRepository) {
+    public CategoriaService(
+            CategoriaRepository categoriaRepository,
+            ProductoRepository productoRepository) {
+
         this.categoriaRepository = categoriaRepository;
+        this.productoRepository = productoRepository;
     }
 
     // Listar todas las categorias
@@ -92,6 +97,12 @@ public class CategoriaService {
 
     // Eliminar categoria
     public void eliminarCategoria(Long id) {
+
+        if (!productoRepository.findByCategoria_Id(id).isEmpty()) {
+            throw new IllegalArgumentException(
+                    "No puedes eliminar una categoria con productos asociados");
+        }
+
         categoriaRepository.deleteById(id);
     }
 }

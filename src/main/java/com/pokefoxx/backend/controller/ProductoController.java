@@ -1,4 +1,3 @@
-
 package com.pokefoxx.backend.controller;
 
 import com.pokefoxx.backend.model.Producto;
@@ -25,6 +24,18 @@ public class ProductoController {
     @GetMapping
     public List<Producto> listarProductos() {
         return productoService.listarProductos();
+    }
+
+    // Listar productos en oferta
+    @GetMapping("/ofertas")
+    public List<Producto> listarOfertas() {
+        return productoService.listarOfertas();
+    }
+
+    // Consultar productos con stock critico
+    @GetMapping("/stock-critico")
+    public List<Producto> listarStockCritico() {
+        return productoService.listarStockCritico();
     }
 
     // Buscar producto por ID
