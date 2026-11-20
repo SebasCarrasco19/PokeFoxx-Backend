@@ -17,10 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 @Service
 public class OrdenService {
@@ -79,7 +79,7 @@ public class OrdenService {
                 BigDecimal.valueOf(cantidad));
     }
 
-    // Agrupar productos repetidos del carrito
+    // Validar y agrupar las cantidades del carrito
     private Map<Long, Integer> obtenerCantidades(
             CompraRequest compra) {
 
@@ -91,8 +91,7 @@ public class OrdenService {
                     "El carrito está vacío");
         }
 
-        Map<Long, Integer> cantidades =
-                new LinkedHashMap<>();
+        Map<Long, Integer> cantidades = new TreeMap<>();
 
         for (DetalleCompraRequest detalle :
                 compra.getProductos()) {
@@ -106,16 +105,21 @@ public class OrdenService {
                         "Detalle de compra inválido");
             }
 
-            cantidades.merge(
-                    detalle.getProductId(),
-                    detalle.getQty(),
-                    Math::addExact);
+            try {
+                cantidades.merge(
+                        detalle.getProductId(),
+                        detalle.getQty(),
+                        Math::addExact);
+            } catch (ArithmeticException e) {
+                throw new IllegalArgumentException(
+                        "Cantidad demasiado grande");
+            }
         }
 
         return cantidades;
     }
 
-    // Calcular total sin guardar una compra
+    // Calcular total sin registrar una compra
     public BigDecimal calcularTotalCompra(
             CompraRequest compra) {
 
@@ -142,7 +146,7 @@ public class OrdenService {
         return total;
     }
 
-    // Registrar una compra en MySQL
+    // Registrar compra y proteger el stock
     @Transactional
     public Orden registrarCompra(
             CompraRequest compra, Usuario usuario) {
@@ -159,12 +163,12 @@ public class OrdenService {
 
         BigDecimal total = BigDecimal.ZERO;
 
-        // Buscar productos y validar la compra
+        // Buscar productos con bloqueo de escritura
         for (Map.Entry<Long, Integer> item :
                 cantidades.entrySet()) {
 
             Producto producto = productoRepository
-                    .findById(item.getKey())
+                    .buscarParaCompra(item.getKey())
                     .orElseThrow(() ->
                             new IllegalArgumentException(
                                     "Producto no encontrado: "
@@ -172,22 +176,24 @@ public class OrdenService {
 
             int cantidad = item.getValue();
 
+            // Comprobar stock con el producto bloqueado
             BigDecimal subtotal =
                     calcularSubtotal(producto, cantidad);
 
             DetalleOrden detalle = new DetalleOrden();
+
             detalle.setProducto(producto);
             detalle.setCantidad(cantidad);
             detalle.setPrecioUnitario(producto.getPrice());
             detalle.setSubtotal(subtotal);
 
             detalles.add(detalle);
-
             total = total.add(subtotal);
         }
 
         // Crear la orden
         Orden orden = new Orden();
+
         orden.setUsuario(usuario);
         orden.setFecha(LocalDateTime.now());
         orden.setEstado("PENDIENTE");
@@ -203,13 +209,16 @@ public class OrdenService {
 
             Producto producto = detalle.getProducto();
 
-            producto.setStock(
+            int nuevoStock =
                     producto.getStock() -
-                    detalle.getCantidad());
+                    detalle.getCantidad();
+
+            producto.setStock(nuevoStock);
 
             productoRepository.save(producto);
         }
 
+        // Los cambios se confirman al terminar la transacción
         return orden;
     }
 }
