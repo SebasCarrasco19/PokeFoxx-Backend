@@ -99,6 +99,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/categorias/**")
                         .hasRole("ADMINISTRADOR")
 
+                        // Pendiente: unificar globalmente el versionado /api y /api/v1.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ordenes")
+                        .hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/ordenes", "/api/v1/ordenes/**")
+                        .hasAnyRole("CLIENTE", "VENDEDOR", "ADMINISTRADOR")
+                        .requestMatchers("/api/v1/ordenes", "/api/v1/ordenes/**")
+                        .denyAll()
+
                         // Consultar perfil del usuario autenticado
                         .requestMatchers("/api/usuarios/me").authenticated()
 

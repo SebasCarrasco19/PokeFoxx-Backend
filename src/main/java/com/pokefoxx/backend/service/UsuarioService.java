@@ -2,6 +2,7 @@ package com.pokefoxx.backend.service;
 
 import com.pokefoxx.backend.model.Usuario;
 import com.pokefoxx.backend.repository.UsuarioRepository;
+import com.pokefoxx.backend.repository.OrdenRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,13 +16,16 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OrdenRepository ordenRepository;
 
     public UsuarioService(
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            OrdenRepository ordenRepository) {
 
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.ordenRepository = ordenRepository;
     }
 
     // Listar todos los usuarios
@@ -222,6 +226,9 @@ public class UsuarioService {
             );
         }
 
+        if (ordenRepository.existsByUsuario_Id(id)) {
+            throw new IllegalArgumentException("No puedes eliminar un usuario con ordenes asociadas");
+        }
         usuarioRepository.deleteById(id);
     }
 }

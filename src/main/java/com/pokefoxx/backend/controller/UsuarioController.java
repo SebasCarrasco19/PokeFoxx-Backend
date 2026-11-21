@@ -225,9 +225,15 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
 
-        usuarioService.eliminarUsuario(id);
-
-        return ResponseEntity.noContent().build();
+        try {
+            usuarioService.eliminarUsuario(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "No puedes eliminar un usuario con datos asociados"));
+        }
     }
 
     // Convertir usuario a respuesta sin contraseña

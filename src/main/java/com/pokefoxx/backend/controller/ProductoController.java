@@ -116,15 +116,21 @@ public class ProductoController {
 
     // Eliminar producto
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarProducto(
+    public ResponseEntity<?> eliminarProducto(
             @PathVariable Long id) {
 
         if (productoService.buscarProductoPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        productoService.eliminarProducto(id);
-
-        return ResponseEntity.noContent().build();
+        try {
+            productoService.eliminarProducto(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "No puedes eliminar un producto con datos asociados"));
+        }
     }
 }

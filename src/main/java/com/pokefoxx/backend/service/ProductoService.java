@@ -4,6 +4,7 @@ import com.pokefoxx.backend.model.Producto;
 import com.pokefoxx.backend.model.Categoria;
 import com.pokefoxx.backend.repository.ProductoRepository;
 import com.pokefoxx.backend.repository.CategoriaRepository;
+import com.pokefoxx.backend.repository.DetalleOrdenRepository;
 
 import org.springframework.stereotype.Service;
 
@@ -17,13 +18,16 @@ public class ProductoService {
 
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
+    private final DetalleOrdenRepository detalleOrdenRepository;
 
     public ProductoService(
             ProductoRepository productoRepository,
-            CategoriaRepository categoriaRepository) {
+            CategoriaRepository categoriaRepository,
+            DetalleOrdenRepository detalleOrdenRepository) {
 
         this.productoRepository = productoRepository;
         this.categoriaRepository = categoriaRepository;
+        this.detalleOrdenRepository = detalleOrdenRepository;
     }
 
     // Listar todos los productos
@@ -188,6 +192,9 @@ public class ProductoService {
 
     // Eliminar producto
     public void eliminarProducto(Long id) {
+        if (detalleOrdenRepository.existsByProducto_Id(id)) {
+            throw new IllegalArgumentException("No puedes eliminar un producto con compras asociadas");
+        }
         productoRepository.deleteById(id);
     }
 }
