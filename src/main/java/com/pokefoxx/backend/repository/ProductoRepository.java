@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 package com.pokefoxx.backend.repository;
 
@@ -19,3 +20,13 @@ public interface ProductoRepository
     @Query("SELECT p FROM Producto p WHERE p.id = :id")
     Optional<Producto> buscarParaCompra(@Param("id") Long id);
 }
+=======
+package com.pokefoxx.backend.repository;
+
+import com.pokefoxx.backend.model.Producto;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ProductoRepository extends JpaRepository<Producto, Long> {
+
+}
+>>>>>>> origin/main
