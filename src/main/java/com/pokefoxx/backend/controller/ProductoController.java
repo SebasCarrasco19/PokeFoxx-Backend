@@ -1,4 +1,3 @@
-
 package com.pokefoxx.backend.controller;
 
 import com.pokefoxx.backend.model.Producto;
@@ -9,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/productos")
@@ -26,43 +26,92 @@ public class ProductoController {
         return productoService.listarProductos();
     }
 
+    // Listar productos en oferta
+    @GetMapping("/ofertas")
+    public List<Producto> listarOfertas() {
+        return productoService.listarOfertas();
+    }
+
+    // Consultar productos con stock critico
+    @GetMapping("/stock-critico")
+    public List<Producto> listarStockCritico() {
+        return productoService.listarStockCritico();
+    }
+
     // Buscar producto por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Producto> buscarProducto(@PathVariable Long id) {
+    public ResponseEntity<Producto> buscarProducto(
+            @PathVariable Long id) {
+
         return productoService.buscarProductoPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Buscar productos por categoria
+    @GetMapping("/categoria/{categoriaId}")
+    public ResponseEntity<?> listarProductosPorCategoria(
+            @PathVariable Long categoriaId) {
+
+        try {
+
+            return ResponseEntity.ok(
+                    productoService.listarProductosPorCategoria(categoriaId)
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // Crear producto
     @PostMapping
-    public ResponseEntity<Producto> crearProducto(
+    public ResponseEntity<?> crearProducto(
             @RequestBody Producto producto) {
 
-        producto.setId(null);
+        try {
 
-        Producto nuevoProducto =
-                productoService.guardarProducto(producto);
+            producto.setId(null);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(nuevoProducto);
+            Producto nuevoProducto =
+                    productoService.guardarProducto(producto);
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(nuevoProducto);
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     // Actualizar producto
     @PutMapping("/{id}")
-    public ResponseEntity<Producto> actualizarProducto(
+    public ResponseEntity<?> actualizarProducto(
             @PathVariable Long id,
             @RequestBody Producto producto) {
 
-        return productoService.buscarProductoPorId(id)
-                .map(productoExistente -> {
-                    producto.setId(id);
+        if (productoService.buscarProductoPorId(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
 
-                    return ResponseEntity.ok(
-                            productoService.guardarProducto(producto)
-                    );
-                })
-                .orElse(ResponseEntity.notFound().build());
+        try {
+
+            producto.setId(id);
+
+            Producto actualizado =
+                    productoService.guardarProducto(producto);
+
+            return ResponseEntity.ok(actualizado);
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     // Eliminar producto

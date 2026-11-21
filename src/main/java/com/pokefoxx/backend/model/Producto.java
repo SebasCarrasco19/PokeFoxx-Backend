@@ -36,7 +36,9 @@ public class Producto {
     @Column(name = "critical_stock")
     private Integer criticalStock;
 
-    private String category;
+    @ManyToOne
+    @JoinColumn(name = "categoria_id")
+    private Categoria categoria;
 
     @Column(name = "image_path", length = 500)
     private String image;
@@ -126,12 +128,12 @@ public class Producto {
         this.criticalStock = criticalStock;
     }
 
-    public String getCategory() {
-        return category;
+    public Categoria getCategoria() {
+        return categoria;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setCategoria(Categoria categoria) {
+        this.categoria = categoria;
     }
 
     public String getImage() {
