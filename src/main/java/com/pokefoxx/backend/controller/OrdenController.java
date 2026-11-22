@@ -9,6 +9,10 @@ import com.pokefoxx.backend.repository.DetalleOrdenRepository;
 import com.pokefoxx.backend.repository.UsuarioRepository;
 import com.pokefoxx.backend.service.OrdenService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,6 +26,11 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/ordenes")
+@Tag(
+    name = "Órdenes y Compras",
+    description = "Registro de compras y consulta de órdenes según los permisos de cada usuario."
+)
+@SecurityRequirement(name = "bearerAuth")
 public class OrdenController {
 
     private final OrdenService ordenService;
@@ -71,6 +80,10 @@ public class OrdenController {
     }
 
     // Crear compra
+    @Operation(
+        summary = "Registrar una compra",
+        description = "Solo Cliente. Registra una compra utilizando los productos y cantidades enviados. El backend valida el stock, calcula el total y descuenta las unidades compradas."
+    )
     @PostMapping
     public ResponseEntity<?> registrarCompra(
             @RequestBody CompraRequest compra,
@@ -102,6 +115,10 @@ public class OrdenController {
     }
 
     // Listar órdenes según el rol
+    @Operation(
+        summary = "Listar órdenes",
+        description = "Cliente: consulta únicamente sus propias compras. Vendedor y Administrador: pueden consultar todas las órdenes registradas."
+    )
     @GetMapping
     public ResponseEntity<?> listarOrdenes(Authentication auth) {
 
@@ -146,6 +163,10 @@ public class OrdenController {
     }
 
     // Consultar una orden y sus productos
+    @Operation(
+        summary = "Consultar detalle de una orden",
+        description = "Obtiene una orden y sus productos, cantidades, precios y subtotales. El Cliente solo puede consultar sus propias órdenes. Vendedor y Administrador pueden consultar cualquier orden."
+    )
     @GetMapping("/{id}")
     public ResponseEntity<?> obtenerOrden(
             @PathVariable Long id,

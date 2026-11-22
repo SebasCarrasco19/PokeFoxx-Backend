@@ -163,22 +163,36 @@ class IntegracionOrdenesTests {
         assertEquals(5, productos.findById(producto.getId()).orElseThrow().getStock());
     }
 
-    @Test
-    void impideEliminarProductoOUsuarioConCompras() throws Exception {
-        comprar(cliente);
-        mvc.perform(delete("/api/productos/" + producto.getId()).header("Authorization", token(admin)))
-                .andExpect(status().isConflict());
-        mvc.perform(delete("/api/usuarios/" + cliente.getId()).header("Authorization", token(admin)))
-                .andExpect(status().isConflict());
-        assertTrue(productos.existsById(producto.getId()));
-        assertTrue(usuarios.existsById(cliente.getId()));
-        assertEquals(1, ordenes.count()); assertEquals(1, detalles.count());
-        mvc.perform(delete("/api/usuarios/" + otro.getId()).header("Authorization", token(admin)))
-                .andExpect(status().isNoContent());
-        Producto libre = producto("LIBRE", 1);
-        mvc.perform(delete("/api/productos/" + libre.getId()).header("Authorization", token(admin)))
-                .andExpect(status().isNoContent());
-    }
+ 
+@Test
+void impideEliminarProductoOUsuarioConCompras() throws Exception {
+    comprar(cliente);
+
+    mvc.perform(delete("/api/v1/productos/" + producto.getId())
+            .header("Authorization", token(admin)))
+            .andExpect(status().isConflict());
+
+    mvc.perform(delete("/api/v1/usuarios/" + cliente.getId())
+            .header("Authorization", token(admin)))
+            .andExpect(status().isConflict());
+
+    assertTrue(productos.existsById(producto.getId()));
+    assertTrue(usuarios.existsById(cliente.getId()));
+
+    assertEquals(1, ordenes.count());
+    assertEquals(1, detalles.count());
+
+    mvc.perform(delete("/api/v1/usuarios/" + otro.getId())
+            .header("Authorization", token(admin)))
+            .andExpect(status().isNoContent());
+
+    Producto libre = producto("LIBRE", 1);
+
+    mvc.perform(delete("/api/v1/productos/" + libre.getId())
+            .header("Authorization", token(admin)))
+            .andExpect(status().isNoContent());
+}
+
 
     @Test
     void dosComprasSimultaneasNoSobrevendenLaUltimaUnidad() throws Exception {

@@ -1,3 +1,4 @@
+
 package com.pokefoxx.backend.config;
 
 import com.pokefoxx.backend.security.CustomUserDetailsService;
@@ -56,62 +57,75 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Rutas de autenticacion
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+
+                        // Permitir acceso a Swagger / OpenAPI
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs"
+                        ).permitAll()
 
                         // Stock critico: solamente administrador
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/productos/stock-critico"
+                                "/api/v1/productos/stock-critico"
                         ).hasRole("ADMINISTRADOR")
 
                         // Consultar productos publicamente
-                        .requestMatchers(HttpMethod.GET, "/api/productos/**")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/productos/**")
                         .permitAll()
 
                         // Crear productos: solamente administrador
-                        .requestMatchers(HttpMethod.POST, "/api/productos/**")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/productos/**")
                         .hasRole("ADMINISTRADOR")
 
                         // Actualizar productos: solamente administrador
-                        .requestMatchers(HttpMethod.PUT, "/api/productos/**")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/productos/**")
                         .hasRole("ADMINISTRADOR")
 
                         // Eliminar productos: solamente administrador
-                        .requestMatchers(HttpMethod.DELETE, "/api/productos/**")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/productos/**")
                         .hasRole("ADMINISTRADOR")
 
                         // Consultar categorias publicamente
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/categorias",
-                                "/api/categorias/**"
+                                "/api/v1/categorias",
+                                "/api/v1/categorias/**"
                         ).permitAll()
 
                         // Crear categorias: solamente administrador
-                        .requestMatchers(HttpMethod.POST, "/api/categorias/**")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/categorias/**")
                         .hasRole("ADMINISTRADOR")
 
                         // Actualizar categorias: solamente administrador
-                        .requestMatchers(HttpMethod.PUT, "/api/categorias/**")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/categorias/**")
                         .hasRole("ADMINISTRADOR")
 
                         // Eliminar categorias: solamente administrador
-                        .requestMatchers(HttpMethod.DELETE, "/api/categorias/**")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/categorias/**")
                         .hasRole("ADMINISTRADOR")
 
-                        // Pendiente: unificar globalmente el versionado /api y /api/v1.
+                        // Ordenes: permisos segun rol
                         .requestMatchers(HttpMethod.POST, "/api/v1/ordenes")
                         .hasRole("CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/ordenes", "/api/v1/ordenes/**")
-                        .hasAnyRole("CLIENTE", "VENDEDOR", "ADMINISTRADOR")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/ordenes",
+                                "/api/v1/ordenes/**"
+                        ).hasAnyRole("CLIENTE", "VENDEDOR", "ADMINISTRADOR")
+
                         .requestMatchers("/api/v1/ordenes", "/api/v1/ordenes/**")
                         .denyAll()
 
                         // Consultar perfil del usuario autenticado
-                        .requestMatchers("/api/usuarios/me").authenticated()
+                        .requestMatchers("/api/v1/usuarios/me").authenticated()
 
                         // Gestion general de usuarios: solamente administrador
-                        .requestMatchers("/api/usuarios/**")
+                        .requestMatchers("/api/v1/usuarios/**")
                         .hasRole("ADMINISTRADOR")
 
                         // Cualquier otra ruta requiere autenticacion

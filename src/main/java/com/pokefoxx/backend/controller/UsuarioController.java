@@ -1,7 +1,12 @@
+
 package com.pokefoxx.backend.controller;
 
 import com.pokefoxx.backend.model.Usuario;
 import com.pokefoxx.backend.service.UsuarioService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +18,12 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/usuarios")
+@RequestMapping("/api/v1/usuarios")
+@Tag(
+    name = "Gestión de Usuarios",
+    description = "Administración de usuarios, perfiles personales y roles."
+)
+@SecurityRequirement(name = "bearerAuth")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -23,6 +33,10 @@ public class UsuarioController {
     }
 
     // Consultar perfil del usuario autenticado
+    @Operation(
+        summary = "Consultar mi perfil",
+        description = "Permite a un usuario autenticado consultar su información personal sin mostrar la contraseña."
+    )
     @GetMapping("/me")
     public ResponseEntity<?> obtenerMiPerfil(
             Authentication authentication) {
@@ -41,6 +55,10 @@ public class UsuarioController {
     }
 
     // Actualizar perfil del usuario autenticado
+    @Operation(
+        summary = "Actualizar mi perfil",
+        description = "Permite actualizar los datos personales del usuario autenticado. No permite cambiar el correo desde el perfil."
+    )
     @PutMapping("/me")
     public ResponseEntity<?> actualizarMiPerfil(
             Authentication authentication,
@@ -90,6 +108,10 @@ public class UsuarioController {
     }
 
     // ADMINISTRADOR: listar todos los usuarios
+    @Operation(
+        summary = "Listar todos los usuarios",
+        description = "Solo Administrador. Obtiene la lista de usuarios registrados sin mostrar sus contraseñas."
+    )
     @GetMapping
     public List<PerfilUsuarioResponse> listarUsuarios() {
 
@@ -100,6 +122,10 @@ public class UsuarioController {
     }
 
     // ADMINISTRADOR: buscar usuario por ID
+    @Operation(
+        summary = "Buscar usuario por ID",
+        description = "Solo Administrador. Consulta la información de un usuario mediante su identificador."
+    )
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarUsuario(
             @PathVariable Long id) {
@@ -115,6 +141,10 @@ public class UsuarioController {
     }
 
     // ADMINISTRADOR: cambiar rol de un usuario
+    @Operation(
+        summary = "Cambiar rol de usuario",
+        description = "Solo Administrador. Permite cambiar el rol de otro usuario. Un administrador no puede cambiar su propio rol."
+    )
     @PutMapping("/{id}/rol")
     public ResponseEntity<?> cambiarRol(
             @PathVariable Long id,
@@ -166,6 +196,10 @@ public class UsuarioController {
     }
 
     // ADMINISTRADOR: actualizar usuario
+    @Operation(
+        summary = "Actualizar usuario",
+        description = "Solo Administrador. Permite modificar la información de un usuario registrado."
+    )
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarUsuario(
             @PathVariable Long id,
@@ -198,6 +232,10 @@ public class UsuarioController {
     }
 
     // ADMINISTRADOR: eliminar usuario
+    @Operation(
+        summary = "Eliminar usuario",
+        description = "Solo Administrador. Elimina un usuario si no tiene compras asociadas. Un administrador no puede eliminarse a sí mismo."
+    )
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarUsuario(
             @PathVariable Long id,
@@ -228,11 +266,19 @@ public class UsuarioController {
         try {
             usuarioService.eliminarUsuario(id);
             return ResponseEntity.noContent().build();
+
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", "No puedes eliminar un usuario con datos asociados"));
+                    .body(Map.of("error", e.getMessage()));
+
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of(
+                            "error",
+                            "No puedes eliminar un usuario con datos asociados"
+                    ));
         }
     }
 

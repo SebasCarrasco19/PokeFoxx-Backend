@@ -1,3 +1,4 @@
+
 package com.pokefoxx.backend.controller;
 
 import com.pokefoxx.backend.model.Usuario;
@@ -5,6 +6,9 @@ import com.pokefoxx.backend.security.JwtService;
 import com.pokefoxx.backend.service.UsuarioService;
 
 import io.jsonwebtoken.JwtException;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +27,11 @@ import java.util.Locale;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
+@Tag(
+    name = "Autenticación y Registro",
+    description = "Registro de usuarios, inicio de sesión y renovación de tokens JWT."
+)
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -44,6 +52,10 @@ public class AuthController {
     }
 
     // Iniciar sesion
+    @Operation(
+        summary = "Iniciar sesión",
+        description = "Acceso público. Valida el correo y la contraseña del usuario. Si las credenciales son correctas, devuelve un token JWT de acceso y un refresh token."
+    )
     @PostMapping("/login")
     public ResponseEntity<?> login(
             @RequestBody Map<String, String> loginRequest) {
@@ -100,6 +112,10 @@ public class AuthController {
     }
 
     // Renovar token JWT
+    @Operation(
+        summary = "Renovar token JWT",
+        description = "Acceso público. Recibe un refresh token válido y devuelve un nuevo token de acceso sin necesidad de iniciar sesión nuevamente."
+    )
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(
             @RequestBody RefreshRequest request) {
@@ -157,6 +173,10 @@ public class AuthController {
     }
 
     // Registrar usuario
+    @Operation(
+        summary = "Registrar nuevo usuario",
+        description = "Acceso público. Registra un nuevo usuario con rol Cliente. Valida los datos obligatorios y devuelve la información del usuario registrado sin mostrar su contraseña."
+    )
     @PostMapping("/register")
     public ResponseEntity<?> registrar(
             @RequestBody RegistroRequest request) {
