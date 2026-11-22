@@ -20,8 +20,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/usuarios")
 @Tag(
-    name = "Gestión de Usuarios",
-    description = "Administración de usuarios, perfiles personales y roles."
+        name = "Gestión de Usuarios",
+        description = "Administración de usuarios, perfiles personales y roles."
 )
 @SecurityRequirement(name = "bearerAuth")
 public class UsuarioController {
@@ -34,8 +34,8 @@ public class UsuarioController {
 
     // Consultar perfil del usuario autenticado
     @Operation(
-        summary = "Consultar mi perfil",
-        description = "Permite a un usuario autenticado consultar su información personal sin mostrar la contraseña."
+            summary = "Consultar mi perfil",
+            description = "Permite a un usuario autenticado consultar su información personal sin mostrar la contraseña."
     )
     @GetMapping("/me")
     public ResponseEntity<?> obtenerMiPerfil(
@@ -56,8 +56,8 @@ public class UsuarioController {
 
     // Actualizar perfil del usuario autenticado
     @Operation(
-        summary = "Actualizar mi perfil",
-        description = "Permite actualizar los datos personales del usuario autenticado. No permite cambiar el correo desde el perfil."
+            summary = "Actualizar mi perfil",
+            description = "Permite actualizar los datos personales del usuario autenticado. No permite cambiar el correo ni el RUN desde el perfil."
     )
     @PutMapping("/me")
     public ResponseEntity<?> actualizarMiPerfil(
@@ -87,6 +87,9 @@ public class UsuarioController {
 
         try {
 
+            // Impedir modificar el RUN desde el perfil personal
+            datos.setRun(null);
+
             Usuario actualizado =
                     usuarioService.actualizarUsuario(
                             usuario.getId(),
@@ -109,8 +112,8 @@ public class UsuarioController {
 
     // ADMINISTRADOR: listar todos los usuarios
     @Operation(
-        summary = "Listar todos los usuarios",
-        description = "Solo Administrador. Obtiene la lista de usuarios registrados sin mostrar sus contraseñas."
+            summary = "Listar todos los usuarios",
+            description = "Solo Administrador. Obtiene la lista de usuarios registrados sin mostrar sus contraseñas."
     )
     @GetMapping
     public List<PerfilUsuarioResponse> listarUsuarios() {
@@ -123,8 +126,8 @@ public class UsuarioController {
 
     // ADMINISTRADOR: buscar usuario por ID
     @Operation(
-        summary = "Buscar usuario por ID",
-        description = "Solo Administrador. Consulta la información de un usuario mediante su identificador."
+            summary = "Buscar usuario por ID",
+            description = "Solo Administrador. Consulta la información de un usuario mediante su identificador."
     )
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarUsuario(
@@ -142,8 +145,8 @@ public class UsuarioController {
 
     // ADMINISTRADOR: cambiar rol de un usuario
     @Operation(
-        summary = "Cambiar rol de usuario",
-        description = "Solo Administrador. Permite cambiar el rol de otro usuario. Un administrador no puede cambiar su propio rol."
+            summary = "Cambiar rol de usuario",
+            description = "Solo Administrador. Permite cambiar el rol de otro usuario. Un administrador no puede cambiar su propio rol."
     )
     @PutMapping("/{id}/rol")
     public ResponseEntity<?> cambiarRol(
@@ -197,8 +200,8 @@ public class UsuarioController {
 
     // ADMINISTRADOR: actualizar usuario
     @Operation(
-        summary = "Actualizar usuario",
-        description = "Solo Administrador. Permite modificar la información de un usuario registrado."
+            summary = "Actualizar usuario",
+            description = "Solo Administrador. Permite modificar la información de un usuario registrado."
     )
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarUsuario(
@@ -233,8 +236,8 @@ public class UsuarioController {
 
     // ADMINISTRADOR: eliminar usuario
     @Operation(
-        summary = "Eliminar usuario",
-        description = "Solo Administrador. Elimina un usuario si no tiene compras asociadas. Un administrador no puede eliminarse a sí mismo."
+            summary = "Eliminar usuario",
+            description = "Solo Administrador. Elimina un usuario si no tiene compras asociadas. Un administrador no puede eliminarse a sí mismo."
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarUsuario(
@@ -249,7 +252,7 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
 
-        // Evitar que el administrador se elimine a si mismo
+        // Evitar que el administrador se elimine a sí mismo
         if (administrador.getId().equals(id)) {
 
             return ResponseEntity.badRequest()
@@ -264,13 +267,18 @@ public class UsuarioController {
         }
 
         try {
+
             usuarioService.eliminarUsuario(id);
+
             return ResponseEntity.noContent().build();
 
         } catch (IllegalArgumentException e) {
 
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of(
+                            "error",
+                            e.getMessage()
+                    ));
 
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
 
