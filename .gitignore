@@ -1,3 +1,4 @@
+
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -32,5 +33,19 @@ build/
 ### VS Code ###
 .vscode/
 
-# Configuracion local con credenciales
+### Configuracion local con credenciales ###
 src/main/resources/application.yaml
+src/main/resources/application.properties
+src/main/resources/application-local.yaml
+src/main/resources/application-local.properties
+
+### Variables de entorno privadas ###
+.env
+.env.*
+!.env.example
+
+### Archivos privados ###
+*.key
+*.pem
+*.p12
+*.pfx
